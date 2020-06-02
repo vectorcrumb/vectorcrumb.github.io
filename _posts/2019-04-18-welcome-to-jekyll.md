@@ -1,6 +1,4 @@
 ---
-layout: blog
-category: blog
 title: Welcome to Jekyll!
 categories:
   - blog
