@@ -1,7 +1,7 @@
 ---
 title: Welcome to Jekyll!
 categories:
-  - blog
+  - Blog
 tags:
   - Jekyll
   - update
