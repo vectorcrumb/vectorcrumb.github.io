@@ -5,7 +5,6 @@ categories:
 tags:
   - Jekyll
   - update
-published: true
 ---
 
 Blog test! Testing again. Once more.
