@@ -7,6 +7,19 @@
   <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
   <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
   <link rel="canonical" href="{{ page.url | absolute_url }}">
+  <script>
+    // Apply the theme before first paint to avoid a flash.
+    // Explicit choice (localStorage) wins; otherwise follow the OS/browser setting.
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        var dark = stored
+          ? stored === 'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
 
@@ -15,17 +28,87 @@
       <a href="{{ '/' | relative_url }}">{{ site.title }}</a>
     </div>
     <nav class="sidebar-nav">
-      <a href="{{ '/' | relative_url }}"{% if page.url == '/' %} class="active"{% endif %}>Home</a>
-      <a href="{{ '/blog' | relative_url }}"{% if page.url contains '/blog' %} class="active"{% endif %}>Blog</a>
+      <a href="{{ '/blog' | relative_url }}"{% if page.url == '/' or page.url contains '/blog' %} class="active"{% endif %}>Blog</a>
       <a href="{{ '/tools' | relative_url }}"{% if page.url == '/tools/' or page.url == '/tools' %} class="active"{% endif %}>Tools</a>
       <a href="{{ '/projects' | relative_url }}"{% if page.url == '/projects/' or page.url == '/projects' %} class="active"{% endif %}>Projects</a>
       <a href="{{ '/about' | relative_url }}"{% if page.url == '/about/' or page.url == '/about' %} class="active"{% endif %}>About</a>
     </nav>
+    <div class="sidebar-footer">
+      <button id="theme-toggle" class="theme-switch" type="button" role="switch" aria-checked="false" aria-label="Dark mode">
+        <span class="theme-switch-label">Dark mode</span>
+        <span class="theme-switch-track" aria-hidden="true">
+          <span class="theme-switch-thumb">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4.5"></circle>
+              <line x1="12" y1="1.5" x2="12" y2="4"></line>
+              <line x1="12" y1="20" x2="12" y2="22.5"></line>
+              <line x1="3.5" y1="3.5" x2="5.3" y2="5.3"></line>
+              <line x1="18.7" y1="18.7" x2="20.5" y2="20.5"></line>
+              <line x1="1.5" y1="12" x2="4" y2="12"></line>
+              <line x1="20" y1="12" x2="22.5" y2="12"></line>
+              <line x1="3.5" y1="20.5" x2="5.3" y2="18.7"></line>
+              <line x1="18.7" y1="5.3" x2="20.5" y2="3.5"></line>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </span>
+        </span>
+      </button>
+    </div>
   </aside>
 
   <main class="main">
     {{ content }}
   </main>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btn = document.getElementById('theme-toggle');
+      function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+      function sync() { btn.setAttribute('aria-checked', isDark() ? 'true' : 'false'); }
+      sync();
+      btn.addEventListener('click', function () {
+        var dark = isDark();
+        if (dark) root.removeAttribute('data-theme');
+        else root.setAttribute('data-theme', 'dark');
+        try { localStorage.setItem('theme', dark ? 'light' : 'dark'); } catch (e) {}
+        sync();
+      });
+      // Follow live OS/browser changes unless the user has made an explicit choice.
+      try {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+          if (localStorage.getItem('theme')) return;
+          if (e.matches) root.setAttribute('data-theme', 'dark');
+          else root.removeAttribute('data-theme');
+          sync();
+        });
+      } catch (e) {}
+    })();
+  </script>
+
+  <script>
+    // Show each post image's alt text as a visible caption beneath it.
+    (function () {
+      var imgs = document.querySelectorAll('.post-content img[alt]');
+      Array.prototype.forEach.call(imgs, function (img) {
+        var alt = (img.getAttribute('alt') || '').trim();
+        if (!alt) return;
+        var p = img.closest('p');
+        // Only caption images that sit alone in their own paragraph.
+        if (!p || p.querySelectorAll('img').length !== 1 || p.textContent.trim() !== '') return;
+        var figure = document.createElement('figure');
+        figure.className = 'post-figure';
+        var caption = document.createElement('figcaption');
+        caption.textContent = alt;
+        caption.setAttribute('aria-hidden', 'true'); // alt already conveys this to screen readers
+        figure.appendChild(img);
+        figure.appendChild(caption);
+        p.parentNode.replaceChild(figure, p);
+      });
+    })();
+  </script>
 
 </body>
 </html>
